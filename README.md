@@ -16,11 +16,11 @@ Docker支持以下的CentOS版本，目前，CentOS 仅发行版本中的内核�
 > uname -a
 
 ```bash
-[root@yoyo ~]# cat /etc/centos-release
-CentOS Linux release 7.4.1708 (Core)
+[root@creamk mysql]# cat /etc/centos-release
+CentOS Linux release 7.7.1908 (Core)
 
-[root@yoyo ~]# uname -a
-Linux yoyo 3.10.0-693.2.2.el7.x86_64 #1 SMP Tue Sep 12 22:26:13 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+[root@creamk mysql]# uname -a
+Linux creamk.localdomain 3.10.0-693.el7.x86_64 #1 SMP Tue Aug 22 21:09:27 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
 ```
 
 查看后满足docker的环境要求CentOS7.4+系统内核版本为 3.10 以上，就可以接下来的安装操作了
@@ -54,9 +54,6 @@ wget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-
 sudo yum install -y epel-release
 # 配置epel源
 wget -O /etc/yum.repos.d/epel-7.repo http://mirrors.aliyun.com/repo/epel-7.repo
-sudo yum clean all
-sudo yum makecache
-sudo yum update
 # 清除缓存
 sudo yum clean all
 sudo yum makecache
@@ -186,6 +183,8 @@ REPOSITORY                 TAG                 IMAGE ID            CREATED      
 centos/python-36-centos7   latest              90c6a4022ee5        2 weeks ago         657MB
 ```
 
+
+
 ### 运行交互式的容器
 
 ```
@@ -194,11 +193,11 @@ $ sudo docker run [OPTIONS] IMAGE[:TAG] [COMMAND] [ARG…]
 
 要启动centos7，进入交互模式，通过docker的两个参数 -i  -t  ，让docker运行的容器实现“对话”能力
 
-- t : 在新容器内指定一个伪终端或终端。
-- i : 在新容器内指定一个伪终端或终端。
+- t : 在新容器内指定一个伪终端或终端
+- i : 建立互动连接
 
 ```
-docker run -i -t centos/python-36-centos7 /bin/bash 
+docker run -it centos/python-36-centos7 /bin/bash 
 ```
 
 这样可以进入容器中，执行相关的命令
@@ -216,6 +215,8 @@ Hello, world
 exit
 [root@creamk yum.repos.d]# 
 ```
+
+
 
 ### 后台模式启动
 
@@ -235,6 +236,8 @@ Hello
 ```
 
 使用-d后台执行后，会发现下面多了一长串，这个就是容器的唯一id，可以通过这个id找到容器
+
+
 
 ### 容器的相关操作命令
 
@@ -284,9 +287,11 @@ ps 查找参数相关语法
  * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
 ```
 
-**-f: 让 docker logs 像使用 tail -f 一样来输出容器内部的标准输出。**
+-f: 让 docker logs 像使用 tail -f 一样来输出容器内部的标准输出。
 
 > docker logs -f c4acaf391ed5
+
+
 
 ### 停止容器
 
@@ -602,8 +607,6 @@ mysql>
 ```
 
 之后可以在数据库中进行相关操作
-
-
 
 在其他主机访问mysql数据库可通过客户端工具连接
 
