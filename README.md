@@ -1,3 +1,7 @@
+[TOC]
+
+
+
 # CentOs7上安装docker
 
 ## 一、环境准备
@@ -433,6 +437,10 @@ training/webapp            latest              6fae60ef3446        4 years ago  
 
 
 
+![image-20200426174451031](./imgs/docker_continner_cmd.png)
+
+![image-20200426180505507](/Users/CreamK/StudyFIle/API/docker/imgs/docker_continner_cmd2.png)
+
 ## 四、docker安装mysql环境
 
 ### 拉取镜像文件
@@ -516,7 +524,7 @@ docker run -p 3309:3306 —-name mysql5.7 -v /home/mysql/conf:/etc/mysql/conf.d 
 命令说明：
 
 ```bash
-—name  重命名mysql5.7
+-—name  重命名mysql5.7
 
 -p 3306:3306：[主机端口:容器端口]
 
@@ -587,6 +595,8 @@ client-cert.pem  ib_logfile0     performance_schema  server-key.pem
 
 使用命令 docker exec -it [容器名称] bash
 
+或者使用命令 docker attach
+
 ```bash
 [root@creamk mysql]# docker exec -it wonderful_lamarr bash
 root@0f3517c2400d:/# mysql -uroot -p
@@ -612,3 +622,323 @@ mysql>
 
 ![image-20200424232515363](/Users/CreamK/StudyFIle/API/docker/imgs/client_connect.png)
 
+
+
+## 五、docker部署tomcat及web服务
+
+### 从https://hub.docker.com上拉取tomcat最新的镜像
+
+```bash
+[root@creamk mysql]# docker pull tomcat
+Using default tag: latest
+latest: Pulling from library/tomcat
+90fe46dd8199: Downloading [==>                                                ]  2.554MB/50.38MB
+90fe46dd8199: Downloading  39.82MB/50.38MB
+35a4f1977689: Downloading  4.488MB/7.812MB
+bbc37f14aded: Downloading  6.536MB/9.996MB
+bbc37f14aded: Downloading  3.791MB/9.996MB
+74e27dc593d4: Waiting
+93a01fbfad7f: Waiting
+90fe46dd8199: Dow35a4f1977689: Retrying in 1 second  .812MB  4.021MB/9.996MB0d11: Waiting
+7e4bf13b87e6: Waiting
+b96fdb5c0244: Waiting
+```
+
+### 运行容器
+
+使用docker run 运行一个tomcat的容器
+
+-   —name zwtomcat 容器重命名zwtomcat
+-   -p 8088:8080  容器的8080端口映射到主机的8088端口
+-   -v ~/yoyo/tomcat/webapps/jenkins:/usr/local/tomcat/webapps/jenkins 容器的/usr/local/tomcat/webapps/jenkins 目录挂载到本机~/yoyo/tomcat/webapps/jenkins
+-   -d 挂后台运行
+
+>   docker run —name yoyotomcat -p 8090:8080 -v ~/yoyo/tomcat/webapps/jenkins:/usr/local/tomcat/webapps/jenkins -d tomcat
+
+运行成功后 docker ps查看已运行容器
+
+```
+[root@yoyo jenkins]# docker run --name yoyotomcat -p 8090:8080 -v ~/yoyo/tomcat/webapps/jenkins:/usr/local/tomcat/webapps/jenkins -d tomcat
+
+[root@yoyo jenkins]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                               NAMES
+1d07763a6eaa        tomcat              "catalina.sh run"        15 minutes ago      Up 7 minutes        0.0.0.0:8090->8080/tcp              yoyotomcat
+643c1f7c970c        mysql:5.7           "docker-entrypoint.s…"   8 hours ago         Up 27 minutes       33060/tcp, 0.0.0.0:3309->3306/tcp   yoyomysql
+37a3b50d151c        mysql:5.6           "docker-entrypoint.s…"   25 hours ago        Up 26 minutes       0.0.0.0:3308->3306/tcp              mymysql
+[root@yoyo jenkins]#
+```
+
+如果用的是阿里云服务器，需在后台开放8090端口，这样在浏览器输入http://主机ip:8090就能访问到tomcat首页了
+
+![img](https://mmbiz.qpic.cn/mmbiz_png/qia7WF9xhFyAe5cnWP7pydLibEjM8Mia1EhboOyFd1Wl7XpKIbY9qI6MAT9bwdIBo1VVpnqxmkFOkWuGoPNe57KNQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+### 部署war包
+
+tomcat环境已经部署完成，接下来把war包放到tomcat下的webapps目录就可以了，也就是/usr/local/tomcat/webapps。
+前面启动的时候，/usr/local/tomcat/webapps/jenkins目录是挂载到本机的~/yoyo/tomcat/webapps/jenkins目录。
+只需下载jenkins.war放到jenkins目录就可以了
+
+-   cd 到~/yoyo/tomcat/webapps/jenkins/目录
+-   wget 下载jenkins.war
+-   jar -xvf  解压jenkins.war
+
+```
+[root@yoyo jenkins]# cd ~/yoyo/tomcat/webapps/jenkins/
+[root@yoyo jenkins]# wget http://mirrors.jenkins-ci.org/war/latest/jenkins.war
+--2019-06-30 19:40:15--  http://mirrors.jenkins-ci.org/war/latest/jenkins.war
+Resolving mirrors.jenkins-ci.org (mirrors.jenkins-ci.org)... 52.202.51.185
+Connecting to mirrors.jenkins-ci.org (mirrors.jenkins-ci.org)|52.202.51.185|:80... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: http://mirrors.tuna.tsinghua.edu.cn/jenkins/war/2.182/jenkins.war [following]
+--2019-06-30 19:40:16--  http://mirrors.tuna.tsinghua.edu.cn/jenkins/war/2.182/jenkins.war
+Resolving mirrors.tuna.tsinghua.edu.cn (mirrors.tuna.tsinghua.edu.cn)... 101.6.8.193, 2402:f000:1:408:8100::1
+Connecting to mirrors.tuna.tsinghua.edu.cn (mirrors.tuna.tsinghua.edu.cn)|101.6.8.193|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 77565765 (74M) [application/java-archive]
+Saving to: ‘jenkins.war’
+
+100%[=====================================================================================================================>] 77,565,765  12.1MB/s   in 5.1s
+
+2019-06-30 19:40:22 (14.4 MB/s) - ‘jenkins.war’ saved [77565765/77565765]
+
+[root@yoyo jenkins]# jar -xvf jenkins.war
+```
+
+解压之后的目录
+
+```
+[root@yoyo jenkins]# ll
+total 78212
+drwxr-xr-x  3 root root     4096 Jun 23 20:22 bootstrap
+-rw-r--r--  1 root root     1946 Feb  7 12:49 ColorFormatter.class
+drwxr-xr-x  5 root root     4096 Jun 23 20:22 css
+-rw-r--r--  1 root root     1544 Jun 23 20:18 dc-license.txt
+drwxr-xr-x  2 root root     4096 Jun 23 20:22 executable
+-rw-r--r--  1 root root    17542 Jun 23 20:18 favicon.ico
+drwxr-xr-x 12 root root     4096 Jun 23 20:22 help
+drwxr-xr-x  6 root root     4096 Jun 23 20:22 images
+-rw-r--r--  1 root root 77565765 Jun 24 11:22 jenkins.war
+-rw-r--r--  1 root root     1674 Feb  7 12:49 JNLPMain.class
+drwxr-xr-x  2 root root     4096 Jun 23 20:22 jsbundles
+-rw-r--r--  1 root root      862 Feb  7 12:49 LogFileOutputStream$1.class
+-rw-r--r--  1 root root      636 Feb  7 12:49 LogFileOutputStream$2.class
+-rw-r--r--  1 root root     2240 Feb  7 12:49 LogFileOutputStream.class
+-rw-r--r--  1 root root    20730 Feb  7 12:49 Main.class
+-rw-r--r--  1 root root     1048 Feb  7 12:49 MainDialog$1$1.class
+-rw-r--r--  1 root root     1067 Feb  7 12:49 MainDialog$1.class
+-rw-r--r--  1 root root     2633 Feb  7 12:49 MainDialog.class
+-rw-r--r--  1 root root      512 Feb  7 12:49 Main$FileAndDescription.class
+drwxr-xr-x  3 root root     4096 Jun 30 19:22 META-INF
+-rw-r--r--  1 root root       71 Jun 23 20:18 robots.txt
+drwxr-xr-x  3 root root     4096 Jun 23 20:22 scripts
+drwxr-xr-x  7 root root     4096 Jun 23 20:22 WEB-INF
+-rw-r--r--  1 root root  2390099 May 12 15:50 winstone.jar
+[root@yoyo jenkins]#
+```
+
+接着重启tomcat容器就可以生效了
+
+>   docker restart yoyotomcat
+
+### 访问jenkins
+
+浏览器输入访问地址:http://主机ip:8090/jenkins就能访问到主页面了
+
+![img](https://mmbiz.qpic.cn/mmbiz_png/qia7WF9xhFyAe5cnWP7pydLibEjM8Mia1EhjYCxulv0K49MX6YJrFEJRx3PnKW9flNUS7smpycGOOHbr8iaicicGzdfw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+### 方法二：不挂载运行容器
+
+上面是通过挂载tomcat下的webapps目录，在本机上把war包放进去的方式。如果不挂载容器的目录，试了下也是可以把war包放进去的
+一个tomca镜像可以启动多个容器实例，可以再启动一个yytomcat的容器实例,映射到主机的8091端口
+
+```
+[root@yoyo jenkins]# docker run --name yytomcat -p 8091:8080 -d tomcat
+08af0192b961f1ba1bb1bf1edada968822f3143e5f57c59c396fd3fd948e7529
+[root@yoyo jenkins]# docker   ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                               NAMES
+08af0192b961        tomcat              "catalina.sh run"        3 hours ago         Up 3 hours          0.0.0.0:8091->8080/tcp              yytomcat
+1d07763a6eaa        tomcat              "catalina.sh run"        4 hours ago         Up 3 hours          0.0.0.0:8090->8080/tcp              yoyotomcat
+643c1f7c970c        mysql:5.7           "docker-entrypoint.s…"   11 hours ago        Up 4 hours          33060/tcp, 0.0.0.0:3309->3306/tcp   yoyomysql
+37a3b50d151c        mysql:5.6           "docker-entrypoint.s…"   28 hours ago        Up 4 hours          0.0.0.0:3308->3306/tcp              mymysql
+[root@yoyo jenkins]#
+```
+
+启动完成后在浏览器输入http://主机ip:8091就可以访问到tomcat首页了，接着用docker cp 把本机的war包复制到yytomcat容器里面
+
+接着前面下载jenkins.war并解压到~/yoyo/tomcat/webapps/jenkins/目录步骤
+
+-   docker cp 复制 jenkins整个目录到 容器的/usr/local/tomcat/webapps/jenkins目录
+
+-   docker exec -it yytomcat /bin/bash 进入运行容器的交互环境
+
+-   cd 到tomcat容器的webapps/jenkins目录，查看到已经复制成功
+
+-   exit 退出容器
+
+-   docker restart 重启容器
+
+    ```
+    [root@yoyo ~]# docker cp ~/yoyo/tomcat/webapps/jenkins/ yytomcat:/usr/local/tomcat/webapps/jenkins
+    [root@yoyo ~]# docker exec -it yytomcat /bin/bash
+    root@08af0192b961:/usr/local/tomcat# cd webapps/jenkins
+    root@08af0192b961:/usr/local/tomcat/webapps/jenkins# ls
+    ColorFormatter.class         LogFileOutputStream.class        MainDialog$1$1.class  bootstrap      favicon.ico  jsbundles
+    JNLPMain.class             META-INF                MainDialog$1.class      css          help           robots.txt
+    LogFileOutputStream$1.class  Main$FileAndDescription.class  MainDialog.class      dc-license.txt  images       scripts
+    LogFileOutputStream$2.class  Main.class                WEB-INF          executable      jenkins.war  winstone.jar
+    root@08af0192b961:/usr/local/tomcat/webapps/jenkins#
+    root@08af0192b961:/usr/local/tomcat/webapps/jenkins# exit
+    exit
+    [root@yoyo ~]# docker restart yytomcat
+    yytomcat
+    [root@yoyo ~]#
+    ```
+
+    浏览器输入访问地址:http://主机ip:8091/jenkins就能访问到主页面了
+
+
+
+## 六、docker-compose容器集群编排
+
+------
+
+### 前言
+
+实际工作中，我们部署一个应用，一般不仅仅只有一个容器，可能还会涉及到其他模块，比如：数据库、消息中间件MQ、web前端、后端服务等
+
+如果一个一个去启动应用，很难记住，需要一个配置文件，实现对docker容器集群的快速编排
+
+
+
+### docker-compose
+
+------
+
+简介
+
+​	   Docker-Compose项目是Docker官方的开源项目，负责实现对Docker容器集群的快速编排。
+Docker-Compose将所管理的容器分为三层，分别是工程（project），服务（service）以及容器（container）。
+​	   Docker-Compose运行目录下的所有文件（docker-compose.yml，extends文件或环境变量文件等）组成一个工程，若无特殊指定工程名即为当前目录名。一个工程当中可包含多个服务，每个服务中定义了容器运行的镜像，参数，依赖。一个服务当中可包括多个容器实例，Docker-Compose并没有解决负载均衡的问题，因此需要借助其它工具实现服务发现及负载均衡。
+
+​	   Docker-Compose的工程配置文件默认为docker-compose.yml，可通过环境变量COMPOSE_FILE或-f参数自定义配置文件，其定义了多个有依赖关系的服务及每个服务运行的容器。
+
+
+
+### 安装
+
+------
+
+docker-compose使用pip安装即可
+
+```bash
+pip3 install docker-compose
+```
+
+安装完成后查看版本 docker-compose version
+
+```bash
+[root@creamk images]# docker-compose version
+docker-compose version 1.25.5, build unknown
+docker-py version: 4.2.0
+CPython version: 3.7.0
+OpenSSL version: OpenSSL 1.0.2k-fips  26 Jan 2017
+```
+
+
+
+### 实例
+
+------
+
+
+
+docker-compose.yml文件
+
+---
+
+docker-compose已经安装成功，接下来去https://hub.docker.com上找个项目部署来练习下，项目地址： https://hub.docker.com/r/easymock/easymock
+
+
+
+七、Dockerfile构建镜像
+
+
+
+```
+# 基于python3.6.8镜像
+FROM python:3.6.8
+
+MAINTAINER creamk87  <creamk87@outlook.com>
+
+# 更新pip
+RUN pip install --upgrade pip 
+
+# 工作目录
+WORKDIR /code
+ADD . /code
+
+# pip安装依赖包
+RUN pip install -r requirements.txt
+
+# 传递参数
+ENTRYPOINT ["pytest"]
+
+# 默认显示help帮助信息
+CMD ["--help"]
+```
+
+---
+
+![image-20200426214159305](./imgs/dockerfile_cmd.png)
+
+
+$$
+
+$$
+
+
+
+
+## 附录：
+
+### QA：docker拉取镜像很慢怎么办
+
+试着使用阿里云镜像加速器地址或国内镜像地址(只有流星的镜像，无私有镜像)，操作如下
+
+```bash
+root@creamk etc]# tee /etc/docker/daemon.json <<-'EOF'
+>{
+>"registry-mirrors": ["https://9cpn8tt6.mirror.aliyuncs.com"]
+> 或者使用下面这句
+> "registry-mirrors": ["https://registry.docker-cn.com"]
+>}
+>EOF
+[root@creamk etc]# systemctl daemon-reload
+[root@creamk etc]# systemctl restart docker
+```
+
+
+
+### QA:docker支持的5种网络模式
+
+![image-20200426182143019](./imgs/docker_network.png)
+
+#### bridge网络：
+
+![image-20200426182551945](./imgs/docker_network_bridge.png)
+
+#### host网络：
+
+![image-20200426182637273](./imgs/docker_network_host.png)
+
+#### container网络：
+
+![image-20200426182723884](./imgs/docker_network_container.png)
+
+
+
+### QA:docker主机数据挂载到容器上
+
+![image-20200426183534532](/Users/CreamK/StudyFIle/API/docker/imgs/docker_mount.png)
+
+![image-20200426183916108](/Users/CreamK/StudyFIle/API/docker/imgs/docker_mount_volume.png)
