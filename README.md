@@ -626,55 +626,78 @@ mysql>
 
 ## 五、docker部署tomcat及web服务
 
-### 从https://hub.docker.com上拉取tomcat最新的镜像
+### 从https://hub.docker.com上拉取tomcat镜像
+
+我这里拉取的是
 
 ```bash
-[root@creamk mysql]# docker pull tomcat
-Using default tag: latest
-latest: Pulling from library/tomcat
-90fe46dd8199: Downloading [==>                                                ]  2.554MB/50.38MB
-90fe46dd8199: Downloading  39.82MB/50.38MB
-35a4f1977689: Downloading  4.488MB/7.812MB
-bbc37f14aded: Downloading  6.536MB/9.996MB
-bbc37f14aded: Downloading  3.791MB/9.996MB
-74e27dc593d4: Waiting
-93a01fbfad7f: Waiting
-90fe46dd8199: Dow35a4f1977689: Retrying in 1 second  .812MB  4.021MB/9.996MB0d11: Waiting
-7e4bf13b87e6: Waiting
-b96fdb5c0244: Waiting
+[creamk@CreamK]# docker pull tomcat:jdk8-openjdk-slim
+jdk8-openjdk-slim: Pulling from library/tomcat
+54fec2fa59d0: Pull complete
+b7dd01647a92: Pull complete
+cb931af9b241: Pull complete
+35b8cbae8041: Pull complete
+4e00c79a1520: Pull complete
+58d5430a6f83: Pull complete
+4ea63b9970df: Pull complete
+Digest: sha256:d4b2996a573e29b04d0f1dafb5be94f601e426b92002e0a6bed01b1562c86e8e
+Status: Downloaded newer image for tomcat:jdk8-openjdk-slim
+docker.io/library/tomcat:jdk8-openjdk-slim
+[creamk@CreamK]# docker images
+REPOSITORY            TAG                 IMAGE ID            CREATED             SIZE
+jenkinsci/blueocean   latest              f3a41976424c        2 days ago          569MB
+tomcat                jdk8-openjdk-slim   0e33b9ae84bb        3 days ago          304MB
 ```
 
 ### 运行容器
 
 使用docker run 运行一个tomcat的容器
 
--   —name zwtomcat 容器重命名zwtomcat
+-   —name tomcat 容器重命名tomcat
 -   -p 8088:8080  容器的8080端口映射到主机的8088端口
--   -v ~/yoyo/tomcat/webapps/jenkins:/usr/local/tomcat/webapps/jenkins 容器的/usr/local/tomcat/webapps/jenkins 目录挂载到本机~/yoyo/tomcat/webapps/jenkins
+-   -v /Users/CreamK/StudyFIle/API/tomcat/webapps/tomcat_jdk8:/usr/local/tomcat/webapps 容器的/usr/local/tomcat/webapps 目录挂载到本机/Users/CreamK/StudyFIle/API/tomcat/webapps/tomcat_jdk8
 -   -d 挂后台运行
 
->   docker run —name yoyotomcat -p 8090:8080 -v ~/yoyo/tomcat/webapps/jenkins:/usr/local/tomcat/webapps/jenkins -d tomcat
+>   docker run -p 8088:8080 -d --name tomcat -v /Users/CreamK/StudyFIle/API/tomcat/webapps/tomcat_jdk8:/usr/local/tomcat/webapps tomcat:jdk8-openjdk-slim
 
 运行成功后 docker ps查看已运行容器
 
-```
-[root@yoyo jenkins]# docker run --name yoyotomcat -p 8090:8080 -v ~/yoyo/tomcat/webapps/jenkins:/usr/local/tomcat/webapps/jenkins -d tomcat
-
-[root@yoyo jenkins]# docker ps
-CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                               NAMES
-1d07763a6eaa        tomcat              "catalina.sh run"        15 minutes ago      Up 7 minutes        0.0.0.0:8090->8080/tcp              yoyotomcat
-643c1f7c970c        mysql:5.7           "docker-entrypoint.s…"   8 hours ago         Up 27 minutes       33060/tcp, 0.0.0.0:3309->3306/tcp   yoyomysql
-37a3b50d151c        mysql:5.6           "docker-entrypoint.s…"   25 hours ago        Up 26 minutes       0.0.0.0:3308->3306/tcp              mymysql
-[root@yoyo jenkins]#
+```bash
+[creamk@CreamK]# docker run -p 8088:8080 -d --name tomcat -v /Users/CreamK/StudyFIle/API/tomcat/webapps/tomcat_jdk8:/usr/local/tomcat/webapps tomcat:jdk8-openjdk-slim
+[creamk@CreamK]# docker ps -a
+CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS                        PORTS                                              NAMES
+cdd925e21e25        tomcat:jdk8-openjdk-slim   "catalina.sh run"        4 minutes ago       Up 4 minutes                  0.0.0.0:8088->8080/tcp                             tomcat
+084da0b8c76f        jenkinsci/blueocean        "/sbin/tini -- /usr/…"   32 hours ago        Exited (255) 27 minutes ago   0.0.0.0:8080->8080/tcp, 0.0.0.0:50000->50000/tcp   jenkins
+[creamk@CreamK]#
 ```
 
-如果用的是阿里云服务器，需在后台开放8090端口，这样在浏览器输入http://主机ip:8090就能访问到tomcat首页了
+镜像启动成功后，镜像中/usr/local/tomcat/webapps 下默认是空的目录，tomcat的主页在/usr/local/tomcat/webapps.dist目录下，需要进入容器中，把webapps.dist目录下内容拷贝进webapps下，重启docker
 
-![img](https://mmbiz.qpic.cn/mmbiz_png/qia7WF9xhFyAe5cnWP7pydLibEjM8Mia1EhboOyFd1Wl7XpKIbY9qI6MAT9bwdIBo1VVpnqxmkFOkWuGoPNe57KNQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+```bash
+[creamk@CreamK]# docker exec -it tomcat bash
+root@cb8e15aa23e4:/usr/local/tomcat# ls
+BUILDING.txt  CONTRIBUTING.md  LICENSE	NOTICE	README.md  RELEASE-NOTES  RUNNING.txt  bin  conf  include  lib	logs  native-jni-lib  temp  webapps  webapps.dist  work
+root@cb8e15aa23e4:/usr/local/tomcat# cd webapps/
+root@cb8e15aa23e4:/usr/local/tomcat/webapps# mv ../webapps.dist/* .
+root@cb8e15aa23e4:/usr/local/tomcat/webapps# exit
+exit
+[creamk@CreamK]# docker restart tomcat
+```
+
+如果用的是云服务器，需在后台开放8090端口，这样在浏览器输入http://主机ip:8090就能访问到tomcat首页了
+
+![image-20200428221249234](./imgs/docker_tomcat.png)
+
+
 
 ### 部署war包
 
-tomcat环境已经部署完成，接下来把war包放到tomcat下的webapps目录就可以了，也就是/usr/local/tomcat/webapps。
+tomcat环境已经部署完成，接下来把war包放到tomcat下的webapps目录就可以了，
+
+去下载jenkins的war包，http://updates.jenkins-ci.org/download/war/
+
+下载完成后，将war包部署在容器的/usr/local/tomcat/webapps目录下
+
 前面启动的时候，/usr/local/tomcat/webapps/jenkins目录是挂载到本机的~/yoyo/tomcat/webapps/jenkins目录。
 只需下载jenkins.war放到jenkins目录就可以了
 
@@ -895,6 +918,8 @@ CMD ["--help"]
 $$
 
 $$
+
+
 
 
 
