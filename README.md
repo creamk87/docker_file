@@ -622,6 +622,12 @@ mysql>
 
 ![image-20200424232515363](/Users/CreamK/StudyFIle/API/docker/imgs/client_connect.png)
 
+### 不进入容器而向容器发送命令并执行
+
+```bash
+docker exec -it $DOCKER_ID /bin/bash -c 'cd /packages/detectron && python tools/train.py'
+```
+
 
 
 ## 五、docker部署tomcat及web服务
@@ -690,135 +696,6 @@ exit
 
 
 
-### 部署war包
-
-tomcat环境已经部署完成，接下来把war包放到tomcat下的webapps目录就可以了，
-
-去下载jenkins的war包，http://updates.jenkins-ci.org/download/war/
-
-下载完成后，将war包部署在容器的/usr/local/tomcat/webapps目录下
-
-前面启动的时候，/usr/local/tomcat/webapps/jenkins目录是挂载到本机的~/yoyo/tomcat/webapps/jenkins目录。
-只需下载jenkins.war放到jenkins目录就可以了
-
--   cd 到~/yoyo/tomcat/webapps/jenkins/目录
--   wget 下载jenkins.war
--   jar -xvf  解压jenkins.war
-
-```
-[root@yoyo jenkins]# cd ~/yoyo/tomcat/webapps/jenkins/
-[root@yoyo jenkins]# wget http://mirrors.jenkins-ci.org/war/latest/jenkins.war
---2019-06-30 19:40:15--  http://mirrors.jenkins-ci.org/war/latest/jenkins.war
-Resolving mirrors.jenkins-ci.org (mirrors.jenkins-ci.org)... 52.202.51.185
-Connecting to mirrors.jenkins-ci.org (mirrors.jenkins-ci.org)|52.202.51.185|:80... connected.
-HTTP request sent, awaiting response... 302 Found
-Location: http://mirrors.tuna.tsinghua.edu.cn/jenkins/war/2.182/jenkins.war [following]
---2019-06-30 19:40:16--  http://mirrors.tuna.tsinghua.edu.cn/jenkins/war/2.182/jenkins.war
-Resolving mirrors.tuna.tsinghua.edu.cn (mirrors.tuna.tsinghua.edu.cn)... 101.6.8.193, 2402:f000:1:408:8100::1
-Connecting to mirrors.tuna.tsinghua.edu.cn (mirrors.tuna.tsinghua.edu.cn)|101.6.8.193|:80... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 77565765 (74M) [application/java-archive]
-Saving to: ‘jenkins.war’
-
-100%[=====================================================================================================================>] 77,565,765  12.1MB/s   in 5.1s
-
-2019-06-30 19:40:22 (14.4 MB/s) - ‘jenkins.war’ saved [77565765/77565765]
-
-[root@yoyo jenkins]# jar -xvf jenkins.war
-```
-
-解压之后的目录
-
-```
-[root@yoyo jenkins]# ll
-total 78212
-drwxr-xr-x  3 root root     4096 Jun 23 20:22 bootstrap
--rw-r--r--  1 root root     1946 Feb  7 12:49 ColorFormatter.class
-drwxr-xr-x  5 root root     4096 Jun 23 20:22 css
--rw-r--r--  1 root root     1544 Jun 23 20:18 dc-license.txt
-drwxr-xr-x  2 root root     4096 Jun 23 20:22 executable
--rw-r--r--  1 root root    17542 Jun 23 20:18 favicon.ico
-drwxr-xr-x 12 root root     4096 Jun 23 20:22 help
-drwxr-xr-x  6 root root     4096 Jun 23 20:22 images
--rw-r--r--  1 root root 77565765 Jun 24 11:22 jenkins.war
--rw-r--r--  1 root root     1674 Feb  7 12:49 JNLPMain.class
-drwxr-xr-x  2 root root     4096 Jun 23 20:22 jsbundles
--rw-r--r--  1 root root      862 Feb  7 12:49 LogFileOutputStream$1.class
--rw-r--r--  1 root root      636 Feb  7 12:49 LogFileOutputStream$2.class
--rw-r--r--  1 root root     2240 Feb  7 12:49 LogFileOutputStream.class
--rw-r--r--  1 root root    20730 Feb  7 12:49 Main.class
--rw-r--r--  1 root root     1048 Feb  7 12:49 MainDialog$1$1.class
--rw-r--r--  1 root root     1067 Feb  7 12:49 MainDialog$1.class
--rw-r--r--  1 root root     2633 Feb  7 12:49 MainDialog.class
--rw-r--r--  1 root root      512 Feb  7 12:49 Main$FileAndDescription.class
-drwxr-xr-x  3 root root     4096 Jun 30 19:22 META-INF
--rw-r--r--  1 root root       71 Jun 23 20:18 robots.txt
-drwxr-xr-x  3 root root     4096 Jun 23 20:22 scripts
-drwxr-xr-x  7 root root     4096 Jun 23 20:22 WEB-INF
--rw-r--r--  1 root root  2390099 May 12 15:50 winstone.jar
-[root@yoyo jenkins]#
-```
-
-接着重启tomcat容器就可以生效了
-
->   docker restart yoyotomcat
-
-### 访问jenkins
-
-浏览器输入访问地址:http://主机ip:8090/jenkins就能访问到主页面了
-
-![img](https://mmbiz.qpic.cn/mmbiz_png/qia7WF9xhFyAe5cnWP7pydLibEjM8Mia1EhjYCxulv0K49MX6YJrFEJRx3PnKW9flNUS7smpycGOOHbr8iaicicGzdfw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
-
-### 方法二：不挂载运行容器
-
-上面是通过挂载tomcat下的webapps目录，在本机上把war包放进去的方式。如果不挂载容器的目录，试了下也是可以把war包放进去的
-一个tomca镜像可以启动多个容器实例，可以再启动一个yytomcat的容器实例,映射到主机的8091端口
-
-```
-[root@yoyo jenkins]# docker run --name yytomcat -p 8091:8080 -d tomcat
-08af0192b961f1ba1bb1bf1edada968822f3143e5f57c59c396fd3fd948e7529
-[root@yoyo jenkins]# docker   ps
-CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                               NAMES
-08af0192b961        tomcat              "catalina.sh run"        3 hours ago         Up 3 hours          0.0.0.0:8091->8080/tcp              yytomcat
-1d07763a6eaa        tomcat              "catalina.sh run"        4 hours ago         Up 3 hours          0.0.0.0:8090->8080/tcp              yoyotomcat
-643c1f7c970c        mysql:5.7           "docker-entrypoint.s…"   11 hours ago        Up 4 hours          33060/tcp, 0.0.0.0:3309->3306/tcp   yoyomysql
-37a3b50d151c        mysql:5.6           "docker-entrypoint.s…"   28 hours ago        Up 4 hours          0.0.0.0:3308->3306/tcp              mymysql
-[root@yoyo jenkins]#
-```
-
-启动完成后在浏览器输入http://主机ip:8091就可以访问到tomcat首页了，接着用docker cp 把本机的war包复制到yytomcat容器里面
-
-接着前面下载jenkins.war并解压到~/yoyo/tomcat/webapps/jenkins/目录步骤
-
--   docker cp 复制 jenkins整个目录到 容器的/usr/local/tomcat/webapps/jenkins目录
-
--   docker exec -it yytomcat /bin/bash 进入运行容器的交互环境
-
--   cd 到tomcat容器的webapps/jenkins目录，查看到已经复制成功
-
--   exit 退出容器
-
--   docker restart 重启容器
-
-    ```
-    [root@yoyo ~]# docker cp ~/yoyo/tomcat/webapps/jenkins/ yytomcat:/usr/local/tomcat/webapps/jenkins
-    [root@yoyo ~]# docker exec -it yytomcat /bin/bash
-    root@08af0192b961:/usr/local/tomcat# cd webapps/jenkins
-    root@08af0192b961:/usr/local/tomcat/webapps/jenkins# ls
-    ColorFormatter.class         LogFileOutputStream.class        MainDialog$1$1.class  bootstrap      favicon.ico  jsbundles
-    JNLPMain.class             META-INF                MainDialog$1.class      css          help           robots.txt
-    LogFileOutputStream$1.class  Main$FileAndDescription.class  MainDialog.class      dc-license.txt  images       scripts
-    LogFileOutputStream$2.class  Main.class                WEB-INF          executable      jenkins.war  winstone.jar
-    root@08af0192b961:/usr/local/tomcat/webapps/jenkins#
-    root@08af0192b961:/usr/local/tomcat/webapps/jenkins# exit
-    exit
-    [root@yoyo ~]# docker restart yytomcat
-    yytomcat
-    [root@yoyo ~]#
-    ```
-
-    浏览器输入访问地址:http://主机ip:8091/jenkins就能访问到主页面了
-
 
 
 ## 六、docker-compose容器集群编排
@@ -883,9 +760,7 @@ docker-compose已经安装成功，接下来去https://hub.docker.com上找个�
 
 
 
-七、Dockerfile构建镜像
-
-
+## 七、Dockerfile构建镜像
 
 ```
 # 基于python3.6.8镜像
